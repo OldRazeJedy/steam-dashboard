@@ -6,6 +6,23 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "shared.akamai.steamstatic.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "avatars.steamstatic.com",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+  },
+
   typescript: {
     ignoreBuildErrors: true,
   },
