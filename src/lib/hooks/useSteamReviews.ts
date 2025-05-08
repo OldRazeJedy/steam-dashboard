@@ -8,6 +8,7 @@ interface UseSteamReviewsOptions {
   filter?: string;
   language?: string;
   pages?: number;
+  review_type?: "all" | "positive" | "negative";
   fetchAll?: boolean;
 }
 
@@ -35,7 +36,6 @@ export function useSteamReviews(
     setError(null);
 
     try {
-      // Отримуємо рецензії з розширеними даними гравців
       const firstPage = await steamClient.getReviewsWithPlayerData(appId, {
         ...options,
         num_per_page: 20,
@@ -45,11 +45,9 @@ export function useSteamReviews(
       let cursor = firstPage.cursor;
       setSummary(firstPage.query_summary);
 
-      // Якщо потрібно більше сторінок, виконуємо додаткові запити
       const pagesToFetch = options.pages ?? 1;
 
       if (options.fetchAll) {
-        // Продовжуємо отримувати сторінки, поки є курсор і рецензії
         while (cursor && allReviews.length < (options.limit ?? 500)) {
           const nextPage = await steamClient.getReviewsWithPlayerData(appId, {
             ...options,
@@ -62,11 +60,9 @@ export function useSteamReviews(
           allReviews = [...allReviews, ...nextPage.reviews];
           cursor = nextPage.cursor;
 
-          // Обмеження, щоб не зробити забагато запитів
           if (allReviews.length >= 100) break;
         }
       } else {
-        // Фіксована кількість сторінок
         for (let i = 1; i < pagesToFetch && cursor; i++) {
           const nextPage = await steamClient.getReviewsWithPlayerData(appId, {
             ...options,
@@ -94,7 +90,6 @@ export function useSteamReviews(
     if (appId) {
       fetchReviews();
     } else {
-      // Очищаємо попередні результати
       setReviews([]);
       setSummary(null);
       setError(null);

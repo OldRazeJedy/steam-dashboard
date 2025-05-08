@@ -2,10 +2,69 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+// Constants
+const MAX_STEAM_IDS = 100;
+const STEAM_API_TIMEOUT_MS = 5000;
+const STEAM_API_BASE_URL =
+  "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/";
+const USER_AGENT = "Steam Review Explorer";
+
+// Define Steam API response types
+interface PlayerSummary {
+  steamid: string;
+  communityvisibilitystate: number;
+  profilestate: number;
+  personaname: string;
+  profileurl: string;
+  avatar: string;
+  avatarmedium: string;
+  avatarfull: string;
+  avatarhash: string;
+  lastlogoff?: number;
+  personastate: number;
+  realname?: string;
+  primaryclanid?: string;
+  timecreated?: number;
+  personastateflags?: number;
+  gameextrainfo?: string;
+  gameid?: string;
+  loccountrycode?: string;
+  locstatecode?: string;
+  loccityid?: number;
+}
+
+interface GetPlayerSummariesResponse {
+  response: {
+    players: PlayerSummary[];
+  };
+}
+
+// Simple in-memory cache with 10-minute expiration
+const playerCache = new Map<
+  string,
+  { data: GetPlayerSummariesResponse; timestamp: number }
+>();
+const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+// Regex for validating Steam ID format (17-digit numeric string)
+const steamIdRegex = /^\d{17}$/;
+
 const playerQuerySchema = z.object({
-  steamids: z.string().min(1),
+  steamids: z
+    .string()
+    .min(1)
+    .refine(
+      (ids) => {
+        const idArray = ids.split(",");
+        return idArray.every((id) => steamIdRegex.test(id.trim()));
+      },
+      { message: "Invalid Steam ID format. Each ID must be a 17-digit number" },
+    ),
 });
 
+/**
+ * Fetches player summaries from the Steam API
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,7 +75,10 @@ export async function GET(request: NextRequest) {
 
     if (!validatedParams.success) {
       return NextResponse.json(
-        { error: "Неправильні параметри запиту" },
+        {
+          error: "Incorrect query parameters",
+          details: validatedParams.error.format(),
+        },
         { status: 400 },
       );
     }
@@ -24,46 +86,93 @@ export async function GET(request: NextRequest) {
     const { steamids } = validatedParams.data;
 
     const idArray = steamids.split(",");
-    if (idArray.length > 100) {
+    if (idArray.length > MAX_STEAM_IDS) {
       return NextResponse.json(
-        { error: "Можна запросити максимум 100 Steam ID за раз" },
+        {
+          error: `You can request a maximum of ${MAX_STEAM_IDS} Steam IDs at a time`,
+        },
         { status: 400 },
       );
+    }
+
+    // Check cache first
+    if (playerCache.has(steamids)) {
+      const cachedData = playerCache.get(steamids)!;
+      if (Date.now() - cachedData.timestamp < CACHE_TTL_MS) {
+        return NextResponse.json(cachedData.data);
+      }
+      // Cache expired, remove it
+      playerCache.delete(steamids);
     }
 
     const apiKey = process.env.STEAM_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "API ключ не налаштовано на сервері" },
+        { error: "API key is not configured on the server" },
         { status: 500 },
       );
     }
 
-    const steamUrl = new URL(
-      "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/",
-    );
+    const steamUrl = new URL(STEAM_API_BASE_URL);
     steamUrl.searchParams.append("key", apiKey);
     steamUrl.searchParams.append("steamids", steamids);
     steamUrl.searchParams.append("format", "json");
 
-    const response = await fetch(steamUrl.toString(), {
-      headers: {
-        "User-Agent": "Steam Review Explorer",
-      },
-    });
+    // Create an AbortController to manage request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      STEAM_API_TIMEOUT_MS,
+    );
 
-    if (!response.ok) {
-      throw new Error(`Steam API responded with status: ${response.status}`);
+    try {
+      const response = await fetch(steamUrl.toString(), {
+        headers: {
+          "User-Agent": USER_AGENT,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Steam API responded with status: ${response.status}`);
+      }
+
+      const data = (await response.json()) as GetPlayerSummariesResponse;
+
+      // Cache the successful response
+      playerCache.set(steamids, { data, timestamp: Date.now() });
+
+      return NextResponse.json(data);
+    } catch (fetchError) {
+      if (fetchError instanceof Error && fetchError.name === "AbortError") {
+        return NextResponse.json(
+          { error: "Steam API request has exceeded the waiting time" },
+          { status: 504 },
+        );
+      }
+      throw fetchError; // Re-throw to be caught by outer try/catch
     }
-
-    const data = await response.json();
-
-    return NextResponse.json(data);
   } catch (error) {
     console.error("Steam API error:", error);
     return NextResponse.json(
-      { error: "Не вдалося отримати дані гравців з Steam API" },
+      { error: "Failed to retrieve player data from Steam API" },
       { status: 500 },
     );
   }
+}
+
+/**
+ * Handle OPTIONS requests for CORS preflight
+ */
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }

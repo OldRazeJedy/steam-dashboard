@@ -61,7 +61,6 @@ export interface ReviewOptions {
 
 export type ReviewResponse = SteamReviewResponse;
 
-// Типи для API GetPlayerSummaries
 export interface PlayerSummary {
   steamid: string;
   communityvisibilitystate: number;
@@ -87,4 +86,38 @@ export interface PlayerSummariesResponse {
   response: {
     players: PlayerSummary[];
   };
+}
+
+export interface ReviewsAnalysisData {
+  // Всі рецензенти та їхні рецензії
+  reviewers: Record<
+    string,
+    {
+      profile: {
+        steamId: string;
+        personaname?: string;
+        profileurl?: string;
+        avatar?: string;
+        num_games_owned?: number;
+        num_reviews?: number;
+      };
+      reviews: Record<
+        string,
+        {
+          gameId: string;
+          gameName?: string;
+          gameCapsuleImage?: string;
+          recommendation: "positive" | "negative";
+          reviewText: string;
+          reviewDate?: string;
+          reviewUrl?: string;
+          playtime?: number;
+          playtimeAtReview?: number;
+          // timestamp: number;
+        }
+      >;
+      totalPages?: number;
+      error?: string;
+    }
+  >;
 }

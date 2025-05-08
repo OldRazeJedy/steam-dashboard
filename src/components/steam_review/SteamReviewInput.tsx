@@ -16,11 +16,9 @@ export function SteamReviewInput({
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Функція для валідації URL та отримання ID гри
   const handleFetch = () => {
     setError(null);
 
-    // Спроба витягнути appId
     const appId = extractSteamAppId(input);
 
     if (!appId) {
@@ -56,21 +54,17 @@ export function SteamReviewInput({
   );
 }
 
-// Допоміжна функція для витягнення appId
 function extractSteamAppId(input: string): string | null {
-  // Перевірка чи це тільки числовий ID
   if (/^\d+$/.test(input)) {
     return input;
   }
 
-  // Спроба отримати ID з URL
   try {
     const urlObj = new URL(input);
     if (
       urlObj.hostname === "store.steampowered.com" ||
       urlObj.hostname === "steamcommunity.com"
     ) {
-      // Витягуємо appId з URL
       const pathParts = urlObj.pathname.split("/");
       const appIndex = pathParts.findIndex((part) => part === "app");
 
@@ -79,7 +73,7 @@ function extractSteamAppId(input: string): string | null {
       }
     }
   } catch (e) {
-    // URL не валідний, повертаємо null
+    // null
   }
 
   return null;

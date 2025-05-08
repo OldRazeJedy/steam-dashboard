@@ -7,11 +7,25 @@ interface ReviewSummaryProps {
 }
 
 export function ReviewSummary({ summary, appId }: ReviewSummaryProps) {
-  if (!summary) return null;
+  if (
+    summary?.total_positive === undefined ||
+    summary.total_negative === undefined
+  ) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <p>
+            No valid review summary data available for only positive or negative
+            (need to fix)
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const getPositivePercentage = () => {
     const total = summary.total_positive + summary.total_negative;
-    return total > 0 ? Math.round((summary.total_positive / total) * 100) : 0;
+    return total === 0 ? 0 : Math.round((summary.total_positive / total) * 100);
   };
 
   return (

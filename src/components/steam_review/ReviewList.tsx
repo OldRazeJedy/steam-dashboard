@@ -1,7 +1,7 @@
 // src/components/ReviewList.tsx
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { ReviewSummary } from "~/components/ReviewSummary";
-import { ReviewCard } from "~/components/ui/ReviewCard";
+import { ReviewSummary } from "~/components/steam_review/ReviewSummary";
+import { ReviewCard } from "~/components/steam_review/ReviewCard";
 import { Skeleton } from "~/components/ui/skeleton";
 import type { SteamReview, QuerySummary } from "~/types/steam";
 
