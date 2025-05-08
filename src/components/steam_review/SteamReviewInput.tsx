@@ -23,7 +23,7 @@ export function SteamReviewInput({
 
     if (!appId) {
       setError(
-        "Не вдалося знайти ID гри. Перевірте URL або введіть числовий ID.",
+        "Game ID could not be found. Check the URL or enter a numeric ID.",
       );
       return;
     }
@@ -35,13 +35,13 @@ export function SteamReviewInput({
     <div className="space-y-4">
       <div className="flex gap-2">
         <Input
-          placeholder="Введіть посилання на гру або ID гри (напр. store.steampowered.com/app/570 або 570)"
+          placeholder="Enter the game link or game ID (for example, store.steampowered.com/app/570 or 570)"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           className="flex-1"
         />
         <Button onClick={handleFetch} disabled={isLoading || !input.trim()}>
-          {isLoading ? "Завантаження..." : "Отримати рецензії"}
+          {isLoading ? "Loading..." : "Get Reviews"}
         </Button>
       </div>
 

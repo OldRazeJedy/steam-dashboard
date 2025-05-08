@@ -2,7 +2,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { type SteamReview } from "~/types/steam";
 import { formatDistanceToNow } from "date-fns";
-import { uk } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import Image from "next/image";
 
 interface ReviewsPaginationProps {
@@ -27,7 +27,7 @@ export function ReviewsPagination({
   };
 
   if (reviews.length === 0) {
-    return <p className="text-muted-foreground">Рецензій не знайдено</p>;
+    return <p className="text-muted-foreground">No reviews found</p>;
   }
 
   const handlePreviousPage = () => {
@@ -45,7 +45,10 @@ export function ReviewsPagination({
   return (
     <div className="space-y-4">
       {reviews.map((review) => (
-        <Card key={review.recommendationid} className="overflow-hidden">
+        <Card
+          key={review.recommendationid}
+          className="overflow-hidden pt-0 pb-0"
+        >
           <CardContent className="p-4">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -59,7 +62,7 @@ export function ReviewsPagination({
                 <div>
                   <div className="font-medium">{review.author.personaname}</div>
                   <div className="text-muted-foreground text-xs">
-                    Ігор: {review.author.num_games_owned} · Рецензій:{" "}
+                    Games: {review.author.num_games_owned} · Reviews:{" "}
                     {review.author.num_reviews}
                   </div>
                 </div>
@@ -74,7 +77,7 @@ export function ReviewsPagination({
                     onViewUserReviews(review.author.profileurl)
                   }
                 >
-                  Переглянути рецензії користувача
+                  View user reviews
                 </Button>
               )}
             </div>
@@ -87,15 +90,16 @@ export function ReviewsPagination({
                     : "bg-red-100 text-red-800"
                 }`}
               >
-                {review.voted_up ? "Рекомендую" : "Не рекомендую"}
+                {review.voted_up ? "Recommended" : "Not Recommended"}
               </div>
               <div className="text-muted-foreground text-sm">
-                Час гри: {formatPlaytime(review.author.playtime_forever)} годин
+                Playing time: {formatPlaytime(review.author.playtime_forever)}{" "}
+                hrs on record
                 {review.author.playtime_at_review !==
                   review.author.playtime_forever && (
                   <span className="ml-1">
-                    ({formatPlaytime(review.author.playtime_at_review)} годин на
-                    момент рецензування)
+                    ({formatPlaytime(review.author.playtime_at_review)} hrs at
+                    review time)
                   </span>
                 )}
               </div>
@@ -107,9 +111,10 @@ export function ReviewsPagination({
             />
 
             <div className="text-muted-foreground text-right text-xs">
+              Created{" "}
               {formatDistanceToNow(new Date(review.timestamp_created * 1000), {
                 addSuffix: true,
-                locale: uk,
+                locale: enUS,
               })}
             </div>
           </CardContent>
@@ -122,17 +127,17 @@ export function ReviewsPagination({
           onClick={handlePreviousPage}
           disabled={currentPage <= 1}
         >
-          Назад
+          Previous
         </Button>
         <span className="py-2">
-          Сторінка {currentPage} з {totalPages}
+          Page {currentPage} of {totalPages}
         </span>
         <Button
           variant="outline"
           onClick={handleNextPage}
           disabled={currentPage >= totalPages}
         >
-          Вперед
+          Next
         </Button>
       </div>
     </div>

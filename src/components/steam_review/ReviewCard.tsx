@@ -38,7 +38,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
   const hasPlayerInfo = review.author.personaname && review.author.avatar;
 
   return (
-    <Card className="gap-0 py-2">
+    <Card className="gap-0 pt-0 pb-0">
       <CardHeader className="px-4 py-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
