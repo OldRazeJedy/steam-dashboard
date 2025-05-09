@@ -1,5 +1,6 @@
 // src/app/api/steam/players/route.ts
 import { type NextRequest, NextResponse } from "next/server";
+import type { PlayerSummary } from "~/types/steam";
 import { z } from "zod";
 
 // Constants
@@ -8,30 +9,6 @@ const STEAM_API_TIMEOUT_MS = 5000;
 const STEAM_API_BASE_URL =
   "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/";
 const USER_AGENT = "Steam Review Explorer";
-
-// Define Steam API response types
-interface PlayerSummary {
-  steamid: string;
-  communityvisibilitystate: number;
-  profilestate: number;
-  personaname: string;
-  profileurl: string;
-  avatar: string;
-  avatarmedium: string;
-  avatarfull: string;
-  avatarhash: string;
-  lastlogoff?: number;
-  personastate: number;
-  realname?: string;
-  primaryclanid?: string;
-  timecreated?: number;
-  personastateflags?: number;
-  gameextrainfo?: string;
-  gameid?: string;
-  loccountrycode?: string;
-  locstatecode?: string;
-  loccityid?: number;
-}
 
 interface GetPlayerSummariesResponse {
   response: {
@@ -65,6 +42,11 @@ const playerQuerySchema = z.object({
 /**
  * Fetches player summaries from the Steam API
  */
+
+function buildSteamUrl(steamids: string, apiKey: string): string {
+  return `${STEAM_API_BASE_URL}?key=${apiKey}&steamids=${encodeURIComponent(steamids)}`;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -113,10 +95,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const steamUrl = new URL(STEAM_API_BASE_URL);
-    steamUrl.searchParams.append("key", apiKey);
-    steamUrl.searchParams.append("steamids", steamids);
-    steamUrl.searchParams.append("format", "json");
+    // replace the multiple append calls with a single helper call
+    const steamUrl = buildSteamUrl(steamids, apiKey);
 
     // Create an AbortController to manage request timeout
     const controller = new AbortController();

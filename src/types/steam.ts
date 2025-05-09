@@ -71,12 +71,14 @@ export interface PlayerSummary {
   avatarmedium: string;
   avatarfull: string;
   avatarhash: string;
-  lastlogoff: number;
+  lastlogoff?: number;
   personastate: number;
   realname?: string;
   primaryclanid?: string;
   timecreated?: number;
   personastateflags?: number;
+  gameextrainfo?: string;
+  gameid?: string;
   loccountrycode?: string;
   locstatecode?: string;
   loccityid?: number;
@@ -89,7 +91,6 @@ export interface PlayerSummariesResponse {
 }
 
 export interface ReviewsAnalysisData {
-  // Всі рецензенти та їхні рецензії
   reviewers: Record<
     string,
     {
@@ -113,7 +114,7 @@ export interface ReviewsAnalysisData {
           reviewUrl?: string;
           playtime?: number;
           playtimeAtReview?: number;
-          // timestamp: number;
+          reviewTimestamp: number;
         }
       >;
       totalPages?: number;

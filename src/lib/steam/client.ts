@@ -15,15 +15,13 @@ interface ErrorResponse {
  */
 export class SteamClient {
   private baseUrl: string;
-  private apiKey: string;
 
   /**
    * Creates a new Steam client instance
    * @param apiKey - Steam API key for authentication
    */
-  constructor(apiKey: string) {
+  constructor() {
     this.baseUrl = "/api/steam";
-    this.apiKey = apiKey;
   }
 
   /**
@@ -172,4 +170,4 @@ export class SteamClient {
   }
 }
 
-export const steamClient = new SteamClient(process.env.STEAM_API_KEY ?? "");
+export const steamClient = new SteamClient();

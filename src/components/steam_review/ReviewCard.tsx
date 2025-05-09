@@ -23,7 +23,7 @@ interface ReviewCardProps {
 export function ReviewCard({ review }: ReviewCardProps) {
   const formatPlaytime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
-    return `${hours} год.`;
+    return `${hours} hrs.`;
   };
 
   const formatDate = (timestamp: number) => {
@@ -34,7 +34,6 @@ export function ReviewCard({ review }: ReviewCardProps) {
     });
   };
 
-  // Перевіряємо чи доступна додаткова інформація про гравця
   const hasPlayerInfo = review.author.personaname && review.author.avatar;
 
   return (
@@ -48,7 +47,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
               <ThumbsDown className="h-4 w-4 text-red-500" />
             )}
             <span className="text-sm font-medium">
-              {review.voted_up ? "Рекомендую" : "Не рекомендую"}
+              {review.voted_up ? "Recommended" : "Not Recommended"}
             </span>
           </div>
           <div className="text-muted-foreground flex items-center gap-1 text-xs">
@@ -63,7 +62,6 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </p>
       </CardContent>
       <CardFooter className="flex flex-wrap px-4 py-1">
-        {/* Інформація про автора з аватаркою */}
         <div className="mb-1 flex w-full items-center gap-2">
           {hasPlayerInfo && review.author.avatar ? (
             <div className="h-6 w-6 overflow-hidden rounded-full">
@@ -81,7 +79,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
 
           <div className="flex items-center gap-1">
             <span className="text-xs font-medium">
-              {review.author.personaname ?? "Невідомий користувач"}
+              {review.author.personaname ?? "Unknown User"}
             </span>
 
             {review.author.profileurl && (
@@ -97,17 +95,16 @@ export function ReviewCard({ review }: ReviewCardProps) {
           </div>
         </div>
 
-        {/* Інша інформація про рецензію */}
         <div className="text-muted-foreground flex w-full flex-wrap gap-x-2 gap-y-0 text-xs">
           <div className="flex items-center gap-1">
             <Gamepad2 className="h-3 w-3" />
             <span className="text-xs">
-              Награно: {formatPlaytime(review.author.playtime_forever)}
+              Playtime: {formatPlaytime(review.author.playtime_forever)}
             </span>
           </div>
           <div className="flex items-center gap-1">
             <ThumbsUp className="h-3 w-3" />
-            <span className="text-xs">{review.votes_up} корисно</span>
+            <span className="text-xs">{review.votes_up} helpful</span>
           </div>
         </div>
       </CardFooter>

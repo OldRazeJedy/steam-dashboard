@@ -1,7 +1,6 @@
-// src/app/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { SteamReviewInput } from "~/components/steam_review/SteamReviewInput";
 import { useSteamReviews } from "~/lib/hooks/useSteamReviews";
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -16,31 +15,43 @@ import { type ReviewsAnalysisData } from "~/types/steam";
 import { Progress } from "~/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
-// Main component for the home page
+/**
+ * Constants for pagination and analysis configuration
+ */
+const ITEMS_PER_PAGE = 20;
+const MAX_CONCURRENT_REQUESTS = 5;
+const PAGES_TO_FETCH = 2;
+
+/**
+ * Main component for Steam Review Explorer application
+ * Manages review fetching, pagination, user selection, and reviewer analysis
+ */
 export default function Home() {
-  // State variables for managing application data and UI
+  // App state
   const [appId, setAppId] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState<number>(1);
   const [selectedUserProfile, setSelectedUserProfile] = useState<string | null>(
     null,
   );
-  const itemsPerPage = 20;
-  // Fetches Steam reviews and related data
-  const { reviews, summary, loading, error, refetch } = useSteamReviews(appId, {
-    pages: 2,
-  });
 
-  // State variables for reviewer analysis feature
+  // Analysis state
   const [analysisData, setAnalysisData] = useState<ReviewsAnalysisData | null>(
     null,
   );
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [totalReviewersToAnalyze, setTotalReviewersToAnalyze] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState<number>(0);
+  const [, setTotalReviewersToAnalyze] = useState<number>(0);
 
-  // Resets state when a new App ID is provided to fetch reviews
-  const handleFetchReviews = (id: string) => {
+  // Fetches Steam reviews and related data
+  const { reviews, summary, loading, error } = useSteamReviews(appId, {
+    pages: PAGES_TO_FETCH,
+  });
+
+  /**
+   * Resets state when fetching reviews for a new Steam app
+   */
+  const handleFetchReviews = useCallback((id: string): void => {
     setAppId(id);
     setPage(1);
     setSelectedUserProfile(null);
@@ -48,22 +59,37 @@ export default function Home() {
     setIsAnalyzing(false);
     setAnalysisError(null);
     setAnalysisProgress(0);
-  };
+  }, []);
 
-  // Sets the selected user profile to view their reviews
-  const handleViewUserReviews = (profileUrl: string) => {
+  /**
+   * Sets the selected user profile to view their reviews
+   */
+  const handleViewUserReviews = useCallback((profileUrl: string): void => {
     setSelectedUserProfile(profileUrl);
-  };
+  }, []);
 
-  // Initiates and manages the process of analyzing reviewers
-  const handleAnalyzeReviewers = async () => {
-    if (!reviews || reviews.length === 0) return;
+  /**
+   * Progress callback for reviewer analysis
+   */
+  const updateAnalysisProgress = useCallback(
+    (processed: number, total: number): void => {
+      setAnalysisProgress(Math.round((processed / total) * 100));
+    },
+    [],
+  );
+
+  /**
+   * Initiates and manages the process of analyzing reviewers
+   */
+  const handleAnalyzeReviewers = useCallback(async (): Promise<void> => {
+    if (!reviews || reviews.length === 0 || !appId) return;
 
     setIsAnalyzing(true);
     setAnalysisError(null);
     setAnalysisData(null);
     setAnalysisProgress(0);
 
+    // Count unique reviewers
     const uniqueAuthorCount = new Set(reviews.map((r) => r.author.steamid))
       .size;
     setTotalReviewersToAnalyze(uniqueAuthorCount);
@@ -71,15 +97,11 @@ export default function Home() {
     try {
       const data = await aggregateReviewerData(
         reviews,
-        5, // Max concurrent requests
-        (processed, total) => {
-          // Progress callback
-          setAnalysisProgress(Math.round((processed / total) * 100));
-        },
-        appId, // Current App ID
+        MAX_CONCURRENT_REQUESTS,
+        updateAnalysisProgress,
+        appId,
       );
       setAnalysisData(data);
-      console.log("Analysis Complete:", data);
     } catch (err) {
       console.error("Analysis failed:", err);
       setAnalysisError(
@@ -89,14 +111,14 @@ export default function Home() {
       setIsAnalyzing(false);
       setAnalysisProgress(100); // Ensure progress completes
     }
-  };
+  }, [reviews, appId, updateAnalysisProgress]);
 
-  // Pagination logic for reviews
+  // Pagination calculations
   const totalReviews = reviews.length;
-  const totalPages = Math.ceil(totalReviews / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalReviews / ITEMS_PER_PAGE));
   const paginatedReviews = reviews.slice(
-    (page - 1) * itemsPerPage,
-    page * itemsPerPage,
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE,
   );
 
   return (
@@ -138,7 +160,11 @@ export default function Home() {
                     : "Аналізувати всіх рецензентів"}
                 </Button>
                 {isAnalyzing && (
-                  <Progress value={analysisProgress} className="mt-2 h-2" />
+                  <Progress
+                    value={analysisProgress}
+                    className="mt-2 h-2"
+                    aria-label={`Analysis progress: ${analysisProgress}%`}
+                  />
                 )}
                 {analysisError && (
                   <Alert variant="destructive" className="mt-2">
@@ -149,7 +175,7 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Displays results of reviewer analysis */}
+              {/* Display analysis results */}
               {analysisData && !isAnalyzing && (
                 <Card className="mt-4">
                   <CardHeader>
@@ -177,7 +203,6 @@ export default function Home() {
 
               {/* Tabbed interface for game reviews and individual user reviews */}
               <Tabs defaultValue="gameReviews" className="mt-4">
-                {" "}
                 <TabsList className="w-full">
                   <TabsTrigger value="gameReviews" className="flex-1">
                     Рецензії на гру
@@ -188,13 +213,14 @@ export default function Home() {
                     </TabsTrigger>
                   )}
                 </TabsList>
+
                 {/* Tab content for game reviews with pagination */}
                 <TabsContent value="gameReviews">
                   <div className="space-y-4 pt-4">
                     <h2 className="text-xl font-semibold">
                       Рецензії{" "}
                       <span className="text-muted-foreground text-sm font-normal">
-                        (Сторінка {page} з {totalPages || 1})
+                        (Сторінка {page} з {totalPages})
                       </span>
                     </h2>
                     <ReviewsPagination
@@ -206,6 +232,7 @@ export default function Home() {
                     />
                   </div>
                 </TabsContent>
+
                 {/* Tab content for selected user's reviews */}
                 {selectedUserProfile && (
                   <TabsContent value="userReviews">

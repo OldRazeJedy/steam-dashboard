@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react"; // React hooks for state and side effects
+import { useState, useEffect, useCallback } from "react";
 import {
   parseUserReviews,
   type ParsedUserReview,
 } from "~/lib/steam/reviewParser";
 
+/**
+ * Result of the useUserReviews hook
+ */
 interface UseUserReviewsResult {
   reviews: ParsedUserReview[];
   loading: boolean;
@@ -13,11 +16,18 @@ interface UseUserReviewsResult {
   fetchPage: (page: number) => Promise<void>;
 }
 
-// Custom React hook to fetch and manage user reviews from Steam
+/**
+ * Hook for fetching and managing Steam user reviews
+ *
+ * @param profileUrl - The Steam profile URL to fetch reviews from
+ * @param initialPage - Initial page to load (default: 1)
+ * @param maxPages - Maximum number of pages to fetch (default: 3)
+ * @returns Object containing reviews, loading state, error state, and pagination controls
+ */
 export function useUserReviews(
-  profileUrl: string | null, // URL of the user's Steam profile, or null if not set
-  initialPage = 1, // The initial page number to fetch (defaults to 1)
-  maxPages = 3, // Maximum number of review pages to fetch in a single call to parseUserReviews (defaults to 3)
+  profileUrl: string | null,
+  initialPage = 1,
+  maxPages = 3,
 ): UseUserReviewsResult {
   const [reviews, setReviews] = useState<ParsedUserReview[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,47 +35,55 @@ export function useUserReviews(
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(initialPage);
 
-  // Async function to fetch user reviews
-  const fetchUserReviews = async () => {
-    if (!profileUrl) return;
+  /**
+   * Fetches reviews from the Steam profile
+   */
+  const fetchUserReviews = useCallback(
+    async (page = 1): Promise<void> => {
+      if (!profileUrl) return;
 
-    try {
-      setLoading(true);
-      setError(null);
+      try {
+        setLoading(true);
+        setError(null);
 
-      // Call the parser to get reviews and total pages
-      const { reviews: parsedReviews, totalPages: pages } =
-        await parseUserReviews(profileUrl, maxPages);
+        // The API only supports fetching from page 1, so we need to adjust maxPages
+        // based on the requested page to ensure we get the data we need
+        const pageToFetch = Math.min(page, maxPages);
+        const effectiveMaxPages = Math.max(pageToFetch, maxPages);
 
-      setReviews(parsedReviews); // Update reviews state
-      setTotalPages(pages); // Update total pages state
-    } catch (err) {
-      console.error("Error fetching user reviews:", err); // Log the error
-      // Set the error state
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch user reviews"),
-      );
-    } finally {
-      setLoading(false); // Set loading state to false
-    }
-  };
+        const { reviews: parsedReviews, totalPages: pages } =
+          await parseUserReviews(profileUrl, effectiveMaxPages);
 
-  // Async function to fetch a specific page of reviews
-  // Note: The current implementation of parseUserReviews fetches multiple pages up to `maxPages`
-  // and doesn't support fetching a *specific* single page directly yet.
-  // This fetchPage function re-triggers fetchUserReviews, which fetches from the beginning up to maxPages.
-  // For true pagination of individual pages, parseUserReviews would need to support a page parameter.
-  const fetchPage = async (page: number) => {
-    if (!profileUrl || page < 1 || page > totalPages) return; // Validate page number
+        setReviews(parsedReviews);
+        setTotalPages(pages);
+      } catch (err) {
+        console.error("Error fetching user reviews:", err);
+        setError(
+          err instanceof Error
+            ? err
+            : new Error("Failed to fetch user reviews"),
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [profileUrl, maxPages],
+  );
+
+  /**
+   * Fetches a specific page of reviews
+   *
+   * @param page - The page number to fetch
+   */
+  const fetchPage = async (page: number): Promise<void> => {
+    if (!profileUrl || page < 1) return;
 
     try {
       setLoading(true);
       setError(null);
       setCurrentPage(page);
 
-      // Re-fetch reviews. This will fetch from page 1 up to `maxPages` again.
-      // To implement true single-page fetching, `parseUserReviews` would need modification.
-      await fetchUserReviews();
+      await fetchUserReviews(page);
     } catch (err) {
       console.error(`Error fetching page ${page}:`, err);
       setError(
@@ -76,19 +94,21 @@ export function useUserReviews(
     }
   };
 
-  // useEffect hook to fetch reviews when the profileUrl changes or on initial load
+  // Initial data fetch when profileUrl changes
   useEffect(() => {
     if (profileUrl) {
-      fetchUserReviews(); // Fetch reviews if profileUrl is present
+      setCurrentPage(initialPage);
+      fetchUserReviews(initialPage).catch((err) => {
+        console.error("Failed to fetch initial reviews:", err);
+      });
     } else {
-      // Reset state if profileUrl is not present
       setReviews([]);
       setTotalPages(1);
       setCurrentPage(initialPage);
+      setError(null);
     }
-  }, [profileUrl]); // Dependency array: re-run effect if profileUrl changes
+  }, [profileUrl, initialPage, fetchUserReviews]);
 
-  // Return the state and functions to be used by the component
   return {
     reviews,
     loading,

@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { useState } from "react";
+import { useState, type JSX } from "react";
 import Image from "next/image";
 import { type ParsedUserReview } from "~/lib/steam/reviewParser";
 
@@ -12,15 +12,24 @@ interface UserReviewsProps {
   profileUrl: string | null;
 }
 
-export function UserReviews({ profileUrl }: UserReviewsProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+/**
+ * Component to display a user's Steam reviews with pagination
+ */
+export function UserReviews({
+  profileUrl,
+}: UserReviewsProps): JSX.Element | null {
+  const ITEMS_PER_PAGE = 10;
+  const MAX_STEAM_PAGES = 10; // Maximum number of pages to fetch from Steam API
 
+  // Use the hook with proper pagination
   const { reviews, loading, error, totalPages } = useUserReviews(
     profileUrl,
     1,
-    5,
-  ); // Завантажуємо максимум 5 сторінок
+    MAX_STEAM_PAGES,
+  );
+
+  // Client-side pagination state
+  const [clientPage, setClientPage] = useState(1);
 
   if (!profileUrl) return null;
 
@@ -46,32 +55,32 @@ export function UserReviews({ profileUrl }: UserReviewsProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Рецензії користувача</CardTitle>
+          <CardTitle>User reviews</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">Рецензій не знайдено</p>
+          <p className="text-muted-foreground">No reviews found</p>
         </CardContent>
       </Card>
     );
   }
 
-  // Пагінація для локального відображення
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  // Client-side pagination for local display
+  const startIndex = (clientPage - 1) * ITEMS_PER_PAGE;
   const paginatedReviews = reviews.slice(
     startIndex,
     startIndex + ITEMS_PER_PAGE,
   );
   const displayedTotalPages = Math.ceil(reviews.length / ITEMS_PER_PAGE);
 
-  const handleNextPage = () => {
-    if (currentPage < displayedTotalPages) {
-      setCurrentPage(currentPage + 1);
+  const handleNextPage = (): void => {
+    if (clientPage < displayedTotalPages) {
+      setClientPage(clientPage + 1);
     }
   };
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+  const handlePrevPage = (): void => {
+    if (clientPage > 1) {
+      setClientPage(clientPage - 1);
     }
   };
 
@@ -80,17 +89,22 @@ export function UserReviews({ profileUrl }: UserReviewsProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Рецензії користувача</span>
+            <span>User reviews</span>
             <span className="text-muted-foreground text-sm font-normal">
-              {reviews.length} рецензій
-              {totalPages > 5 ? " (показано перші 5 сторінок)" : ""}
+              {reviews.length} reviews
+              {totalPages > MAX_STEAM_PAGES
+                ? ` (showing first ${MAX_STEAM_PAGES} pages)`
+                : ""}
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {paginatedReviews.map((review, index) => (
-              <UserReviewCard key={index} review={review} />
+              <UserReviewCard
+                key={`${review.gameId}-${index}`}
+                review={review}
+              />
             ))}
           </div>
 
@@ -103,21 +117,21 @@ export function UserReviews({ profileUrl }: UserReviewsProps) {
           <div className="mt-6 flex justify-between">
             <Button
               variant="outline"
-              disabled={currentPage <= 1}
+              disabled={clientPage <= 1}
               onClick={handlePrevPage}
             >
-              Назад
+              Back
             </Button>
             <span className="py-2">
-              Сторінка {currentPage} з {displayedTotalPages}
-              {totalPages > 5 && " (з доступних " + totalPages + ")"}
+              Page {clientPage} of {displayedTotalPages}
+              {totalPages > MAX_STEAM_PAGES && ` (of ${totalPages})`}
             </span>
             <Button
               variant="outline"
-              disabled={currentPage >= displayedTotalPages}
+              disabled={clientPage >= displayedTotalPages}
               onClick={handleNextPage}
             >
-              Вперед
+              Next
             </Button>
           </div>
         </CardContent>
@@ -126,7 +140,10 @@ export function UserReviews({ profileUrl }: UserReviewsProps) {
   );
 }
 
-function UserReviewCard({ review }: { review: ParsedUserReview }) {
+/**
+ * Card component to display a single user review
+ */
+function UserReviewCard({ review }: { review: ParsedUserReview }): JSX.Element {
   return (
     <Card>
       <CardContent className="p-4">
@@ -140,9 +157,9 @@ function UserReviewCard({ review }: { review: ParsedUserReview }) {
               <div className="relative h-24 w-44">
                 <Image
                   src={review.gameCapsuleImage}
-                  alt="Game capsule"
+                  alt={review.gameTitle ?? "Game image"}
                   fill
-                  className="rounded object-cover"
+                  className="rounded object-contain"
                   unoptimized
                 />
               </div>
@@ -160,8 +177,8 @@ function UserReviewCard({ review }: { review: ParsedUserReview }) {
                 className="px-2 py-1"
               >
                 {review.recommendationType === "positive"
-                  ? "Рекомендовано"
-                  : "Не рекомендовано"}
+                  ? "Recommended"
+                  : "Not recommended"}
               </Badge>
 
               <a
@@ -170,19 +187,16 @@ function UserReviewCard({ review }: { review: ParsedUserReview }) {
                 rel="noopener noreferrer"
                 className="text-sm text-blue-500 hover:underline"
               >
-                Переглянути на Steam
+                View on Steam
               </a>
             </div>
 
             <div className="text-muted-foreground text-sm">
               {review.hoursTotal !== undefined && (
-                <span>Награно: {review.hoursTotal} год. загалом</span>
+                <span>Hours played: {review.hoursTotal} total</span>
               )}
               {review.hoursAtReview !== undefined && (
-                <span>
-                  {" "}
-                  ({review.hoursAtReview} год. на момент рецензування)
-                </span>
+                <span> ({review.hoursAtReview} hours at review time)</span>
               )}
             </div>
 
