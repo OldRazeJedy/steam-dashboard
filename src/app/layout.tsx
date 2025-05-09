@@ -7,7 +7,7 @@ import { Navbar } from "~/components/ui/navbar";
 
 export const metadata: Metadata = {
   title: "Steam Analytics",
-  description: "Аналітика для Steam даних",
+  description: "Analytics for Steam data",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
@@ -20,7 +20,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uk" className={`${geist.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${geist.variable}`} suppressHydrationWarning>
       <body className="bg-background min-h-screen font-sans antialiased">
         <ThemeProvider
           attribute="class"

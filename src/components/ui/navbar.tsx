@@ -29,21 +29,21 @@ export function Navbar() {
         className="hover:text-primary flex items-center gap-2 font-medium transition-colors"
       >
         <Home className="h-4 w-4" />
-        Головна
+        Home
       </Link>
       <Link
         href="/analytics"
         className="hover:text-primary flex items-center gap-2 font-medium transition-colors"
       >
         <ChartNoAxesColumn />
-        Аналітика
+        Analytics
       </Link>
       <Link
         href="/search"
         className="hover:text-primary flex items-center gap-2 font-medium transition-colors"
       >
         <Search className="h-4 w-4" />
-        Пошук
+        Search
       </Link>
     </>
   );
@@ -71,14 +71,14 @@ export function Navbar() {
             className="hover:text-primary flex items-center gap-2 text-sm font-medium transition-colors"
           >
             <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Профіль</span>
+            <span className="hidden sm:inline">Profile</span>
           </Link>
           <Link
             href="/settings"
             className="hover:text-primary flex items-center gap-2 text-sm font-medium transition-colors md:mr-3"
           >
             <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Налаштування</span>
+            <span className="hidden sm:inline">Settings</span>
           </Link>
           <ModeToggle />
 
@@ -104,14 +104,14 @@ export function Navbar() {
                   className="hover:text-primary flex items-center gap-2 font-medium transition-colors"
                 >
                   <User className="h-4 w-4" />
-                  Профіль
+                  Profile
                 </Link>
                 <Link
                   href="/settings"
                   className="hover:text-primary flex items-center gap-2 font-medium transition-colors"
                 >
                   <Settings className="h-4 w-4" />
-                  Налаштування
+                  Settings
                 </Link>
               </nav>
             </SheetContent>

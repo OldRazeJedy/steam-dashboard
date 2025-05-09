@@ -1,4 +1,3 @@
-// src/components/ui/ReviewCard.tsx
 import {
   Card,
   CardContent,

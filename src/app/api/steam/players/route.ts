@@ -1,4 +1,3 @@
-// src/app/api/steam/players/route.ts
 import { type NextRequest, NextResponse } from "next/server";
 import type { PlayerSummary } from "~/types/steam";
 import { z } from "zod";

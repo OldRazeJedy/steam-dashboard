@@ -1,4 +1,3 @@
-// src/types/steam.ts
 export interface SteamReviewAuthor {
   steamid: string;
   num_games_owned: number;
@@ -6,7 +5,6 @@ export interface SteamReviewAuthor {
   playtime_forever: number;
   playtime_last_two_weeks: number;
   playtime_at_review: number;
-  // Додаткові поля з PlayerSummary
   personaname?: string;
   profileurl?: string;
   avatar?: string;

@@ -156,8 +156,8 @@ export default function Home() {
                   disabled={isAnalyzing || reviews.length === 0}
                 >
                   {isAnalyzing
-                    ? `Аналіз... (${analysisProgress}%)`
-                    : "Аналізувати всіх рецензентів"}
+                    ? `Analysis... (${analysisProgress}%)`
+                    : "Analyze all reviewers"}
                 </Button>
                 {isAnalyzing && (
                   <Progress
@@ -169,7 +169,7 @@ export default function Home() {
                 {analysisError && (
                   <Alert variant="destructive" className="mt-2">
                     <AlertDescription>
-                      Помилка аналізу: {analysisError}
+                      Analysis error: {analysisError}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -180,18 +180,17 @@ export default function Home() {
                 <Card className="mt-4">
                   <CardHeader>
                     <CardTitle>
-                      Результати аналізу позитивних рецензентів
+                      Results of positive reviewers&apos; analysis
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p>
-                      Проаналізовано{" "}
-                      {Object.keys(analysisData.reviewers).length} користувачів,
-                      які дали позитивну рецензію цій грі.
+                      Analyzed {Object.keys(analysisData.reviewers).length}{" "}
+                      users, who gave positive reviews to this game.
                     </p>
                     <div className="mt-2">
                       <h3 className="mb-2 text-sm font-medium">
-                        Аналіз позитивних рецензій:
+                        Analysis of positive reviews:
                       </h3>
                       <pre className="bg-muted max-h-96 overflow-auto rounded p-2 text-xs">
                         {JSON.stringify(analysisData, null, 2)}
@@ -205,11 +204,11 @@ export default function Home() {
               <Tabs defaultValue="gameReviews" className="mt-4">
                 <TabsList className="w-full">
                   <TabsTrigger value="gameReviews" className="flex-1">
-                    Рецензії на гру
+                    Reviews for the game
                   </TabsTrigger>
                   {selectedUserProfile && (
                     <TabsTrigger value="userReviews" className="flex-1">
-                      Рецензії користувача
+                      User reviews
                     </TabsTrigger>
                   )}
                 </TabsList>
@@ -218,9 +217,9 @@ export default function Home() {
                 <TabsContent value="gameReviews">
                   <div className="space-y-4 pt-4">
                     <h2 className="text-xl font-semibold">
-                      Рецензії{" "}
+                      Reviews{" "}
                       <span className="text-muted-foreground text-sm font-normal">
-                        (Сторінка {page} з {totalPages})
+                        (Page {page} of {totalPages})
                       </span>
                     </h2>
                     <ReviewsPagination

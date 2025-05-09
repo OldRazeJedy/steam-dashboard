@@ -1,4 +1,3 @@
-// src/lib/steam/client.ts
 import type {
   ReviewOptions,
   ReviewResponse,

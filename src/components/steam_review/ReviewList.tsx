@@ -1,4 +1,3 @@
-// src/components/ReviewList.tsx
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { ReviewSummary } from "~/components/steam_review/ReviewSummary";
 import { ReviewCard } from "~/components/steam_review/ReviewCard";

@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       const response = await fetch(targetUrl, {
         headers: {
           "User-Agent": USER_AGENT,
-          "Accept-Language": "en,en-US;q=0.9,en;q=0.8", // To get English language content
+          "Accept-Language": "en,en-US;q=0.9", // To get English language content
         },
         signal: controller.signal,
       });
